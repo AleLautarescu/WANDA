@@ -1,0 +1,1079 @@
+---
+title: "WANDA Priorities"
+output: pdf_document
+date: "2025-09-10"
+---
+
+This is an RMarkdown document summarising the quantitative data analysis for the priorities paper.
+
+# SETTING UP ENVIRONMENT
+Loading the packages I use most. Suppressing messages from appearing in RMarkdown doc, so they do not take up space.
+```{r results="hide", warning=FALSE, comment=FALSE, message=FALSE}
+library(ggplot2)
+library(janitor)
+library(dplyr)
+library(writexl)
+library(psych)
+library(Hmisc)
+library(plyr)
+library(ggExtra)
+library(doBy)
+library(grid)
+```
+
+Turn off scientific notation
+```{r}
+options(scipen=999) 
+```
+
+Set theme for future plots
+```{r}
+theme_set(
+        theme_minimal((base_size = 16)) +
+                theme(legend.position = "right"))
+```
+
+Preparing the data: This sets up the R environment and ensurs readr is installed/loaded and configuring knitr to display code in the output.
+```{r setup, include=FALSE}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+if (!requireNamespace("readr", quietly = TRUE)) {
+  install.packages("readr")
+}
+library(readr)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Check R version
+```{r}
+R.version
+```
+
+Loading dataset
+```{r}
+WANDA <- read.csv("MERGED_MOTHERS_USE_2_TOSHARE_CLEANED_300625.csv", header=TRUE, na.string=c("","NA", " ", "not known", "-997", "-998","-999", "-996"))
+```
+
+```{r}
+str(WANDA)
+```
+
+DEMOGRAPHICS 
+
+```{r}
+psych::describe(WANDA$Q1_AgeYears)
+```
+
+Frequencies for diagnosis autism 
+```{r}
+table(WANDA$Q1_4_DiagnosisAutism)
+```
+
+Manual checks
+How many yes autism
+```{r}
+32+54
+```
+
+Percentage yes autism
+```{r}
+8600/709
+```
+
+How many yes and maybes autism
+```{r}
+54+32+77
+```
+
+Percentage autism yes and maybe
+```{r}
+(163*100)/709
+```
+
+Frequencies for diagnosis ADHD 
+```{r}
+table(WANDA$Q1_3_DiagnosisADHD)
+```
+
+Manual checks
+How many yeses
+```{r}
+31+73
+```
+
+Percentage yeses
+```{r}
+10400/709
+```
+
+How many including maybes
+```{r}
+104+89
+```
+
+Percentage including maybes
+```{r}
+19300/709
+```
+
+Frequencies for diagnosis other NDCs
+```{r}
+table(WANDA$Q1_6_DiagnosisOtherNeurodev)
+```
+
+Manual checks
+How many yeses
+```{r}
+67+15
+```
+
+Percentage yeses
+```{r}
+8200/709
+```
+
+Numbers including maybe
+```{r}
+82+23
+```
+
+Percentage including maybe
+```{r}
+10500/709
+```
+
+
+
+Frequencies for diagnosis depression 
+
+```{r}
+table(WANDA$Q1_1_DiagnosisDepression)
+```
+
+Manual checks
+Frequency for depression yes
+```{r}
+70+302
+```
+
+Percentages for depression
+```{r}
+37200/709
+```
+
+Frequencies for depresssion yes and maybe
+```{r}
+372+59
+```
+
+Percentages
+```{r}
+43100/709
+```
+
+Frequencies for diagnosis anxiety
+```{r}
+table(WANDA$Q1_2_DiagnosisAnxiety)
+```
+
+Manual checks
+Frequency yes anxiety
+```{r}
+315+109
+```
+
+Percentages
+```{r}
+42400/709
+```
+
+Plus maybes
+```{r}
+424+83
+```
+
+Percentages
+```{r}
+50700/709
+```
+
+Frequencies for diagnosis other mental health conditions
+```{r}
+table(WANDA$Q1_5_DiagnosisOtherMentalHealth)
+```
+Frequency yes
+```{r}
+108+44
+```
+
+Percentage yes
+```{r}
+15200/709
+```
+
+Frequency plus maybes
+```{r}
+152+38
+```
+
+Percentages
+```{r}
+19000/709
+```
+
+
+Other demographics
+```{r}
+tabyl(WANDA$Q2_GenderIdentity)
+```
+```{r}
+tabyl(WANDA$Q3_SexualOrientation)
+```
+```{r}
+tabyl(WANDA$Q4_RaceEthnicity)
+```
+
+Manual check
+```{r}
+.8222+.0013+.0028+.0789+.0028
+```
+
+Education
+```{r}
+tabyl(WANDA$Q5_Education)
+```
+
+Manual check
+```{r}
+.4542+.3681
+```
+
+Relationship status
+```{r}
+tabyl(WANDA$Q4_RelationshipStatus)
+```
+
+Manual check
+```{r}
+.2426+.7151
+```
+
+Pregnancy status
+```{r}
+tabyl(WANDA$Q3_YouPregnant)
+```
+
+Manual check
+```{r}
+.1368+.0522
+```
+
+Pregnancy during covid
+```{r}
+tabyl(WANDA$Q5_PregnancyDuringCovid)
+```
+
+Manual check
+```{r}
+.1594+.1608
+```
+
+CREATING SUBSETS OF DATAFRAMES 
+
+NEURODIVERGENT SAMPLE 
+Subset: any variable where the answwer is Yes / Likely Yes, and none are "Prefer not to answer"
+```{r}
+WANDA_NDC <- subset(
+  WANDA,
+  (Q1_4_DiagnosisAutism %in% c(
+     "YES, I have been diagnosed with this",
+     "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+   ) |
+   Q1_3_DiagnosisADHD %in% c(
+     "YES, I have been diagnosed with this",
+     "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+   ) |
+   Q1_6_DiagnosisOtherNeurodev %in% c(
+     "YES, I have been diagnosed with this",
+     "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+   ))
+)
+```
+
+Check structure
+```{r}
+str(WANDA_NDC)
+```
+
+How many people ranked each in top 5 and mean rank
+```{r}
+tabyl(WANDA$Q4_1_RankPrevalence)
+```
+
+```{r}
+709-523
+```
+
+```{r}
+18600/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_1_RankPrevalence)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_8_RankInterventionsWomen)
+```
+
+```{r}
+709-197
+```
+
+```{r}
+51200/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_8_RankInterventionsWomen)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_2_RankDiagnosisWomen)
+```
+
+```{r}
+709-298
+```
+
+```{r}
+41100/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_2_RankDiagnosisWomen)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_15_RankParentParentRel)
+```
+
+```{r}
+709-513
+```
+
+```{r}
+19600/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_15_RankParentParentRel)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_14_RankParentInfantRel)
+```
+
+```{r}
+709-322
+```
+
+```{r}
+38700/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_14_RankParentInfantRel)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_10_RankHealthOutcomesWomen)
+```
+
+```{r}
+709-415
+```
+
+```{r}
+29400/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_10_RankHealthOutcomesWomen)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_12_RankHealthOutcomesBaby)
+```
+
+```{r}
+709-436
+```
+
+```{r}
+27300/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_12_RankHealthOutcomesBaby)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_7_RankProtectiveFactors)
+```
+
+```{r}
+709-446
+```
+
+```{r}
+26300/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_7_RankProtectiveFactors)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_6_RankPreviousPregnancies)
+```
+
+```{r}
+709-476
+```
+
+```{r}
+23300/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_6_RankPreviousPregnancies)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_5_RankEnvironmentalRisk)
+```
+
+```{r}
+709-517
+```
+
+```{r}
+19200/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_5_RankEnvironmentalRisk)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_4_RankBiologicalRisk)
+```
+
+```{r}
+709-555
+```
+
+```{r}
+15400/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_4_RankBiologicalRisk)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_3_RankDiagnosisPartners)
+```
+
+```{r}
+709-554
+```
+
+```{r}
+15500/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_3_RankDiagnosisPartners)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_9_RankInterventionsPartners)
+```
+
+```{r}
+709-560
+```
+
+```{r}
+14900/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_9_RankInterventionsPartners)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_13_RankSocialEconomic)
+```
+
+```{r}
+709-601
+```
+
+```{r}
+10800/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_13_RankSocialEconomic)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_11_RankHealthOutcomesPartners)
+```
+
+```{r}
+709-677
+```
+
+```{r}
+3200/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_11_RankHealthOutcomesPartners)
+```
+
+
+
+Repeating above for NDC subsample 
+```{r}
+tabyl(WANDA_NDC$Q4_1_RankPrevalence)
+```
+
+```{r}
+212-146
+```
+
+```{r}
+6600/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_1_RankPrevalence)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_8_RankInterventionsWomen)
+```
+
+```{r}
+212-55
+```
+
+```{r}
+15700/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_8_RankInterventionsWomen)
+```
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_2_RankDiagnosisWomen)
+```
+
+```{r}
+212-89
+```
+
+```{r}
+12300/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_2_RankDiagnosisWomen)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_15_RankParentParentRel)
+```
+
+```{r}
+212-152
+```
+
+```{r}
+6000/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_15_RankParentParentRel)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_14_RankParentInfantRel)
+```
+
+```{r}
+212-94
+```
+
+```{r}
+11800/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_14_RankParentInfantRel)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_10_RankHealthOutcomesWomen)
+```
+
+```{r}
+212-134
+```
+
+```{r}
+7800/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_10_RankHealthOutcomesWomen)
+```
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_12_RankHealthOutcomesBaby)
+```
+
+```{r}
+212-131
+```
+
+```{r}
+8100/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_12_RankHealthOutcomesBaby)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_7_RankProtectiveFactors)
+```
+
+```{r}
+212-132
+```
+
+```{r}
+8000/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_7_RankProtectiveFactors)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_6_RankPreviousPregnancies)
+```
+
+```{r}
+212-149
+```
+
+```{r}
+6300/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_6_RankPreviousPregnancies)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_5_RankEnvironmentalRisk)
+```
+
+```{r}
+212-159
+```
+
+```{r}
+5300/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_5_RankEnvironmentalRisk)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_4_RankBiologicalRisk)
+```
+
+```{r}
+212-168
+```
+
+```{r}
+4400/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_4_RankBiologicalRisk)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_3_RankDiagnosisPartners)
+```
+
+```{r}
+212-160
+```
+
+```{r}
+5200/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_3_RankDiagnosisPartners)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_9_RankInterventionsPartners)
+```
+
+```{r}
+212-172
+```
+
+```{r}
+4000/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_9_RankInterventionsPartners)
+```
+
+```{r}
+tabyl(WANDA_NDC$Q4_13_RankSocialEconomic)
+```
+
+```{r}
+212-176
+```
+
+```{r}
+3600/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_13_RankSocialEconomic)
+```
+
+```{r}
+tabyl(WANDA_NDC$Q4_11_RankHealthOutcomesPartners)
+```
+
+```{r}
+212-203
+```
+
+```{r}
+900/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_11_RankHealthOutcomesPartners)
+```
+
+
+Calculating priority scores
+
+```{r}
+str(WANDA$Q4_1_RankPrevalence)
+```
+
+```{r}
+WANDA$Q4_1_RankPrevalenceREV <- recode(WANDA$Q4_1_RankPrevalence,
+                                       `1` = 5,
+                                       `2` = 4,
+                                       `3` = 3,
+                                       `4` = 2,
+                                       `5` = 1)
+```
+
+```{r}
+Q4_1_RankPrevalenceSUM <- sum(WANDA$Q4_1_RankPrevalenceREV, na.rm = TRUE)
+Q4_1_RankPrevalenceSUM
+```
+
+Now listing all variables that contain "rank"
+```{r}
+vars <- grep("Rank", names(WANDA), value = TRUE)
+print(vars)
+```
+
+Running the code for all of them to reverse score
+```{r}
+WANDA$Q4_2_RankDiagnosisWomenREV <- recode(WANDA$Q4_2_RankDiagnosisWomen,
+                                           `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_2_RankDiagnosisWomenSUM <- sum(WANDA$Q4_2_RankDiagnosisWomenREV, na.rm = TRUE)
+Q4_2_RankDiagnosisWomenSUM
+```
+
+
+```{r}
+WANDA$Q4_3_RankDiagnosisPartnersREV <- recode(WANDA$Q4_3_RankDiagnosisPartners,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_3_RankDiagnosisPartnersSUM <- sum(WANDA$Q4_3_RankDiagnosisPartnersREV, na.rm = TRUE)
+Q4_3_RankDiagnosisPartnersSUM
+```
+
+```{r}
+WANDA$Q4_4_RankBiologicalRiskREV <- recode(WANDA$Q4_4_RankBiologicalRisk,
+                                           `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_4_RankBiologicalRiskSUM <- sum(WANDA$Q4_4_RankBiologicalRiskREV, na.rm = TRUE)
+Q4_4_RankBiologicalRiskSUM
+```
+
+```{r}
+WANDA$Q4_5_RankEnvironmentalRiskREV <- recode(WANDA$Q4_5_RankEnvironmentalRisk,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_5_RankEnvironmentalRiskSUM <- sum(WANDA$Q4_5_RankEnvironmentalRiskREV, na.rm = TRUE)
+Q4_5_RankEnvironmentalRiskSUM
+```
+
+```{r}
+WANDA$Q4_6_RankPreviousPregnanciesREV <- recode(WANDA$Q4_6_RankPreviousPregnancies,
+                                                `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_6_RankPreviousPregnanciesSUM <- sum(WANDA$Q4_6_RankPreviousPregnanciesREV, na.rm = TRUE)
+Q4_6_RankPreviousPregnanciesSUM
+```
+
+```{r}
+WANDA$Q4_7_RankProtectiveFactorsREV <- recode(WANDA$Q4_7_RankProtectiveFactors,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_7_RankProtectiveFactorsSUM <- sum(WANDA$Q4_7_RankProtectiveFactorsREV, na.rm = TRUE)
+Q4_7_RankProtectiveFactorsSUM
+```
+
+```{r}
+WANDA$Q4_8_RankInterventionsWomenREV <- recode(WANDA$Q4_8_RankInterventionsWomen,
+                                               `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_8_RankInterventionsWomenSUM <- sum(WANDA$Q4_8_RankInterventionsWomenREV, na.rm = TRUE)
+Q4_8_RankInterventionsWomenSUM
+```
+
+```{r}
+WANDA$Q4_9_RankInterventionsPartnersREV <- recode(WANDA$Q4_9_RankInterventionsPartners,
+                                                  `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_9_RankInterventionsPartnersSUM <- sum(WANDA$Q4_9_RankInterventionsPartnersREV, na.rm = TRUE)
+Q4_9_RankInterventionsPartnersSUM
+```
+
+```{r}
+WANDA$Q4_10_RankHealthOutcomesWomenREV <- recode(WANDA$Q4_10_RankHealthOutcomesWomen,
+                                                 `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_10_RankHealthOutcomesWomenSUM <- sum(WANDA$Q4_10_RankHealthOutcomesWomenREV, na.rm = TRUE)
+Q4_10_RankHealthOutcomesWomenSUM
+```
+
+```{r}
+WANDA$Q4_11_RankHealthOutcomesPartnersREV <- recode(WANDA$Q4_11_RankHealthOutcomesPartners,
+                                                    `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_11_RankHealthOutcomesPartnersSUM <- sum(WANDA$Q4_11_RankHealthOutcomesPartnersREV, na.rm = TRUE)
+Q4_11_RankHealthOutcomesPartnersSUM
+```
+
+```{r}
+WANDA$Q4_12_RankHealthOutcomesBabyREV <- recode(WANDA$Q4_12_RankHealthOutcomesBaby,
+                                                `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_12_RankHealthOutcomesBabySUM <- sum(WANDA$Q4_12_RankHealthOutcomesBabyREV, na.rm = TRUE)
+Q4_12_RankHealthOutcomesBabySUM
+```
+
+```{r}
+WANDA$Q4_13_RankSocialEconomicREV <- recode(WANDA$Q4_13_RankSocialEconomic,
+                                            `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_13_RankSocialEconomicSUM <- sum(WANDA$Q4_13_RankSocialEconomicREV, na.rm = TRUE)
+Q4_13_RankSocialEconomicSUM
+```
+
+```{r}
+WANDA$Q4_14_RankParentInfantRelREV <- recode(WANDA$Q4_14_RankParentInfantRel,
+                                             `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_14_RankParentInfantRelSUM <- sum(WANDA$Q4_14_RankParentInfantRelREV, na.rm = TRUE)
+Q4_14_RankParentInfantRelSUM
+```
+
+```{r}
+WANDA$Q4_15_RankParentParentRelREV <- recode(WANDA$Q4_15_RankParentParentRel,
+                                             `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_15_RankParentParentRelSUM <- sum(WANDA$Q4_15_RankParentParentRelREV, na.rm = TRUE)
+Q4_15_RankParentParentRelSUM
+```
+
+
+Now same for the NDC subsample
+
+```{r}
+WANDA_NDC$Q4_1_RankPrevalenceREV <- recode(WANDA_NDC$Q4_1_RankPrevalence,
+                                       `1` = 5,
+                                       `2` = 4,
+                                       `3` = 3,
+                                       `4` = 2,
+                                       `5` = 1)
+NDCQ4_1_RankPrevalenceSUM <- sum(WANDA_NDC$Q4_1_RankPrevalenceREV, na.rm = TRUE)
+NDCQ4_1_RankPrevalenceSUM
+```
+
+```{r}
+WANDA_NDC$Q4_2_RankDiagnosisWomenREV <- recode(WANDA_NDC$Q4_2_RankDiagnosisWomen,
+                                           `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_2_RankDiagnosisWomenSUMNDC <- sum(WANDA_NDC$Q4_2_RankDiagnosisWomenREV, na.rm = TRUE)
+Q4_2_RankDiagnosisWomenSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_3_RankDiagnosisPartnersREV <- recode(WANDA_NDC$Q4_3_RankDiagnosisPartners,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_3_RankDiagnosisPartnersSUMNDC <- sum(WANDA_NDC$Q4_3_RankDiagnosisPartnersREV, na.rm = TRUE)
+Q4_3_RankDiagnosisPartnersSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_4_RankBiologicalRiskREV <- recode(WANDA_NDC$Q4_4_RankBiologicalRisk,
+                                           `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_4_RankBiologicalRiskSUMNDC <- sum(WANDA_NDC$Q4_4_RankBiologicalRiskREV, na.rm = TRUE)
+Q4_4_RankBiologicalRiskSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_5_RankEnvironmentalRiskREV <- recode(WANDA_NDC$Q4_5_RankEnvironmentalRisk,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_5_RankEnvironmentalRiskSUMNDC <- sum(WANDA_NDC$Q4_5_RankEnvironmentalRiskREV, na.rm = TRUE)
+Q4_5_RankEnvironmentalRiskSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_6_RankPreviousPregnanciesREV <- recode(WANDA_NDC$Q4_6_RankPreviousPregnancies,
+                                                `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_6_RankPreviousPregnanciesSUMNDC <- sum(WANDA_NDC$Q4_6_RankPreviousPregnanciesREV, na.rm = TRUE)
+Q4_6_RankPreviousPregnanciesSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_7_RankProtectiveFactorsREV <- recode(WANDA_NDC$Q4_7_RankProtectiveFactors,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_7_RankProtectiveFactorsSUMNDC <- sum(WANDA_NDC$Q4_7_RankProtectiveFactorsREV, na.rm = TRUE)
+Q4_7_RankProtectiveFactorsSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_8_RankInterventionsWomenREV <- recode(WANDA_NDC$Q4_8_RankInterventionsWomen,
+                                               `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_8_RankInterventionsWomenSUMNDC <- sum(WANDA_NDC$Q4_8_RankInterventionsWomenREV, na.rm = TRUE)
+Q4_8_RankInterventionsWomenSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_9_RankInterventionsPartnersREV <- recode(WANDA_NDC$Q4_9_RankInterventionsPartners,
+                                                  `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_9_RankInterventionsPartnersSUMNDC <- sum(WANDA_NDC$Q4_9_RankInterventionsPartnersREV, na.rm = TRUE)
+Q4_9_RankInterventionsPartnersSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_10_RankHealthOutcomesWomenREV <- recode(WANDA_NDC$Q4_10_RankHealthOutcomesWomen,
+                                                 `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_10_RankHealthOutcomesWomenSUMNDC <- sum(WANDA_NDC$Q4_10_RankHealthOutcomesWomenREV, na.rm = TRUE)
+Q4_10_RankHealthOutcomesWomenSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_11_RankHealthOutcomesPartnersREV <- recode(WANDA_NDC$Q4_11_RankHealthOutcomesPartners,
+                                                    `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_11_RankHealthOutcomesPartnersSUMNDC <- sum(WANDA_NDC$Q4_11_RankHealthOutcomesPartnersREV, na.rm = TRUE)
+Q4_11_RankHealthOutcomesPartnersSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_12_RankHealthOutcomesBabyREV <- recode(WANDA_NDC$Q4_12_RankHealthOutcomesBaby,
+                                                `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_12_RankHealthOutcomesBabySUMNDC <- sum(WANDA_NDC$Q4_12_RankHealthOutcomesBabyREV, na.rm = TRUE)
+Q4_12_RankHealthOutcomesBabySUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_13_RankSocialEconomicREV <- recode(WANDA_NDC$Q4_13_RankSocialEconomic,
+                                            `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_13_RankSocialEconomicSUMNDC <- sum(WANDA_NDC$Q4_13_RankSocialEconomicREV, na.rm = TRUE)
+Q4_13_RankSocialEconomicSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_14_RankParentInfantRelREV <- recode(WANDA_NDC$Q4_14_RankParentInfantRel,
+                                             `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_14_RankParentInfantRelSUMNDC <- sum(WANDA_NDC$Q4_14_RankParentInfantRelREV, na.rm = TRUE)
+Q4_14_RankParentInfantRelSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_15_RankParentParentRelREV <- recode(WANDA_NDC$Q4_15_RankParentParentRel,
+                                             `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_15_RankParentParentRelSUMNDC <- sum(WANDA_NDC$Q4_15_RankParentParentRelREV, na.rm = TRUE)
+Q4_15_RankParentParentRelSUMNDC
+```
