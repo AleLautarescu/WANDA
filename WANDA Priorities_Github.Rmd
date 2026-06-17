@@ -1,0 +1,1802 @@
+---
+title: "WANDA Priorities"
+output: pdf_document
+date: "2025-09-10"
+---
+
+This is an RMarkdown document summarising the quantitative data analysis for the WANDA Priorities Paper.
+
+# SETTING UP ENVIRONMENT
+Loading the packages I use most. Suppressing messages from appearing in RMarkdown doc, so they do not take up space.
+```{r results="hide", warning=FALSE, comment=FALSE, message=FALSE}
+library(ggplot2)
+library(janitor)
+library(dplyr)
+library(writexl)
+library(psych)
+library(Hmisc)
+library(plyr)
+library(ggExtra)
+library(doBy)
+library(grid)
+```
+
+Turn off scientific notation
+```{r}
+options(scipen=999) 
+```
+
+Set theme for future plots
+```{r}
+theme_set(
+        theme_minimal((base_size = 16)) +
+                theme(legend.position = "right"))
+```
+
+Preparing the data: This sets up the R environment and ensures readr is installed/loaded and configuring knitr to display code in the output.
+```{r setup, include=FALSE}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+if (!requireNamespace("readr", quietly = TRUE)) {
+  install.packages("readr")
+}
+library(readr)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Checking R version
+```{r}
+R.version
+```
+
+Loading dataset
+```{r}
+WANDA <- read.csv("MERGED_MOTHERS_USE_2_TOSHARE_CLEANED_300625.csv", header=TRUE, na.string=c("","NA", " ", "not known", "-997", "-998","-999", "-996"))
+```
+
+```{r}
+str(WANDA)
+```
+
+DEMOGRAPHICS 
+
+```{r}
+psych::describe(WANDA$Q1_AgeYears)
+```
+
+Frequencies for diagnosis autism 
+```{r}
+table(WANDA$Q1_4_DiagnosisAutism)
+```
+
+Manual checks
+How many yes autism
+```{r}
+32+54
+```
+
+Percentage yes autism
+```{r}
+8600/709
+```
+
+How many yes and maybes autism
+```{r}
+54+32+77
+```
+
+Percentage autism yes and maybe
+```{r}
+(163*100)/709
+```
+
+Frequencies for diagnosis ADHD 
+```{r}
+table(WANDA$Q1_3_DiagnosisADHD)
+```
+
+Manual checks
+How many yeses
+```{r}
+31+73
+```
+
+Percentage yeses
+```{r}
+10400/709
+```
+
+How many including maybes
+```{r}
+104+89
+```
+
+Percentage including maybes
+```{r}
+19300/709
+```
+
+Frequencies for diagnosis other NDCs
+```{r}
+table(WANDA$Q1_6_DiagnosisOtherNeurodev)
+```
+
+Manual checks
+How many yeses
+```{r}
+67+15
+```
+
+Percentage yeses
+```{r}
+8200/709
+```
+
+Numbers including maybe
+```{r}
+82+23
+```
+
+Percentage including maybe
+```{r}
+10500/709
+```
+
+
+
+Frequencies for diagnosis depression 
+
+```{r}
+table(WANDA$Q1_1_DiagnosisDepression)
+```
+
+Manual checks
+Frequency for depression yes
+```{r}
+70+302
+```
+
+Percentages for depression
+```{r}
+37200/709
+```
+
+Frequencies for depresssion yes and maybe
+```{r}
+372+59
+```
+
+Percentages
+```{r}
+43100/709
+```
+
+Frequencies for diagnosis anxiety
+```{r}
+table(WANDA$Q1_2_DiagnosisAnxiety)
+```
+
+Manual checks
+Frequency yes anxiety
+```{r}
+315+109
+```
+
+Percentages
+```{r}
+42400/709
+```
+
+Plus maybes
+```{r}
+424+83
+```
+
+Percentages
+```{r}
+50700/709
+```
+
+Frequencies for diagnosis other mental health conditions
+```{r}
+table(WANDA$Q1_5_DiagnosisOtherMentalHealth)
+```
+Frequency yes
+```{r}
+108+44
+```
+
+Percentage yes
+```{r}
+15200/709
+```
+
+Frequency plus maybes
+```{r}
+152+38
+```
+
+Percentages
+```{r}
+19000/709
+```
+
+
+Other demographics
+```{r}
+tabyl(WANDA$Q2_GenderIdentity)
+```
+```{r}
+tabyl(WANDA$Q3_SexualOrientation)
+```
+```{r}
+tabyl(WANDA$Q4_RaceEthnicity)
+```
+
+Manual check
+```{r}
+.8222+.0013+.0028+.0789+.0028
+```
+
+Education
+```{r}
+tabyl(WANDA$Q5_Education)
+```
+
+Manual check
+```{r}
+.4542+.3681
+```
+
+Relationship status
+```{r}
+tabyl(WANDA$Q4_RelationshipStatus)
+```
+
+Manual check
+```{r}
+.2426+.7151
+```
+
+Pregnancy status
+```{r}
+tabyl(WANDA$Q3_YouPregnant)
+```
+
+Manual check
+```{r}
+.1368+.0522
+```
+
+Pregnancy during covid
+```{r}
+tabyl(WANDA$Q5_PregnancyDuringCovid)
+```
+
+Manual check
+```{r}
+.1594+.1608
+```
+
+CREATING SUBSETS OF DATAFRAMES 
+
+NEURODIVERGENT SAMPLE 
+Subset: any variable where the answwer is Yes / Likely Yes, and none are "Prefer not to answer"
+```{r}
+WANDA_NDC <- subset(
+  WANDA,
+  (Q1_4_DiagnosisAutism %in% c(
+     "YES, I have been diagnosed with this",
+     "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+   ) |
+   Q1_3_DiagnosisADHD %in% c(
+     "YES, I have been diagnosed with this",
+     "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+   ) |
+   Q1_6_DiagnosisOtherNeurodev %in% c(
+     "YES, I have been diagnosed with this",
+     "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+   ))
+)
+```
+
+
+
+Check structure
+```{r}
+str(WANDA_NDC)
+```
+
+How many people ranked each in top 5 and mean rank
+```{r}
+tabyl(WANDA$Q4_1_RankPrevalence)
+```
+
+```{r}
+709-523
+```
+
+```{r}
+18600/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_1_RankPrevalence)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_8_RankInterventionsWomen)
+```
+
+```{r}
+709-197
+```
+
+```{r}
+51200/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_8_RankInterventionsWomen)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_2_RankDiagnosisWomen)
+```
+
+```{r}
+709-298
+```
+
+```{r}
+41100/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_2_RankDiagnosisWomen)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_15_RankParentParentRel)
+```
+
+```{r}
+709-513
+```
+
+```{r}
+19600/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_15_RankParentParentRel)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_14_RankParentInfantRel)
+```
+
+```{r}
+709-322
+```
+
+```{r}
+38700/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_14_RankParentInfantRel)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_10_RankHealthOutcomesWomen)
+```
+
+```{r}
+709-415
+```
+
+```{r}
+29400/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_10_RankHealthOutcomesWomen)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_12_RankHealthOutcomesBaby)
+```
+
+```{r}
+709-436
+```
+
+```{r}
+27300/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_12_RankHealthOutcomesBaby)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_7_RankProtectiveFactors)
+```
+
+```{r}
+709-446
+```
+
+```{r}
+26300/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_7_RankProtectiveFactors)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_6_RankPreviousPregnancies)
+```
+
+```{r}
+709-476
+```
+
+```{r}
+23300/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_6_RankPreviousPregnancies)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_5_RankEnvironmentalRisk)
+```
+
+```{r}
+709-517
+```
+
+```{r}
+19200/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_5_RankEnvironmentalRisk)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_4_RankBiologicalRisk)
+```
+
+```{r}
+709-555
+```
+
+```{r}
+15400/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_4_RankBiologicalRisk)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_3_RankDiagnosisPartners)
+```
+
+```{r}
+709-554
+```
+
+```{r}
+15500/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_3_RankDiagnosisPartners)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_9_RankInterventionsPartners)
+```
+
+```{r}
+709-560
+```
+
+```{r}
+14900/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_9_RankInterventionsPartners)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_13_RankSocialEconomic)
+```
+
+```{r}
+709-601
+```
+
+```{r}
+10800/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_13_RankSocialEconomic)
+```
+
+
+
+```{r}
+tabyl(WANDA$Q4_11_RankHealthOutcomesPartners)
+```
+
+```{r}
+709-677
+```
+
+```{r}
+3200/709
+```
+
+```{r}
+psych::describe(WANDA$Q4_11_RankHealthOutcomesPartners)
+```
+
+
+
+Repeating above for NDC subsample 
+```{r}
+tabyl(WANDA_NDC$Q4_1_RankPrevalence)
+```
+
+```{r}
+212-146
+```
+
+```{r}
+6600/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_1_RankPrevalence)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_8_RankInterventionsWomen)
+```
+
+```{r}
+212-55
+```
+
+```{r}
+15700/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_8_RankInterventionsWomen)
+```
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_2_RankDiagnosisWomen)
+```
+
+```{r}
+212-89
+```
+
+```{r}
+12300/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_2_RankDiagnosisWomen)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_15_RankParentParentRel)
+```
+
+```{r}
+212-152
+```
+
+```{r}
+6000/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_15_RankParentParentRel)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_14_RankParentInfantRel)
+```
+
+```{r}
+212-94
+```
+
+```{r}
+11800/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_14_RankParentInfantRel)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_10_RankHealthOutcomesWomen)
+```
+
+```{r}
+212-134
+```
+
+```{r}
+7800/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_10_RankHealthOutcomesWomen)
+```
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_12_RankHealthOutcomesBaby)
+```
+
+```{r}
+212-131
+```
+
+```{r}
+8100/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_12_RankHealthOutcomesBaby)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_7_RankProtectiveFactors)
+```
+
+```{r}
+212-132
+```
+
+```{r}
+8000/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_7_RankProtectiveFactors)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_6_RankPreviousPregnancies)
+```
+
+```{r}
+212-149
+```
+
+```{r}
+6300/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_6_RankPreviousPregnancies)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_5_RankEnvironmentalRisk)
+```
+
+```{r}
+212-159
+```
+
+```{r}
+5300/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_5_RankEnvironmentalRisk)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_4_RankBiologicalRisk)
+```
+
+```{r}
+212-168
+```
+
+```{r}
+4400/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_4_RankBiologicalRisk)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_3_RankDiagnosisPartners)
+```
+
+```{r}
+212-160
+```
+
+```{r}
+5200/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_3_RankDiagnosisPartners)
+```
+
+
+
+```{r}
+tabyl(WANDA_NDC$Q4_9_RankInterventionsPartners)
+```
+
+```{r}
+212-172
+```
+
+```{r}
+4000/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_9_RankInterventionsPartners)
+```
+
+```{r}
+tabyl(WANDA_NDC$Q4_13_RankSocialEconomic)
+```
+
+```{r}
+212-176
+```
+
+```{r}
+3600/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_13_RankSocialEconomic)
+```
+
+```{r}
+tabyl(WANDA_NDC$Q4_11_RankHealthOutcomesPartners)
+```
+
+```{r}
+212-203
+```
+
+```{r}
+900/212
+```
+
+```{r}
+psych::describe(WANDA_NDC$Q4_11_RankHealthOutcomesPartners)
+```
+
+
+Calculating priority scores
+
+```{r}
+str(WANDA$Q4_1_RankPrevalence)
+```
+
+```{r}
+WANDA$Q4_1_RankPrevalenceREV <- recode(WANDA$Q4_1_RankPrevalence,
+                                       `1` = 5,
+                                       `2` = 4,
+                                       `3` = 3,
+                                       `4` = 2,
+                                       `5` = 1)
+```
+
+```{r}
+Q4_1_RankPrevalenceSUM <- sum(WANDA$Q4_1_RankPrevalenceREV, na.rm = TRUE)
+Q4_1_RankPrevalenceSUM
+```
+
+Now listing all variables that contain "rank"
+```{r}
+vars <- grep("Rank", names(WANDA), value = TRUE)
+print(vars)
+```
+
+Running the code for all of them to reverse score
+```{r}
+WANDA$Q4_2_RankDiagnosisWomenREV <- recode(WANDA$Q4_2_RankDiagnosisWomen,
+                                           `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_2_RankDiagnosisWomenSUM <- sum(WANDA$Q4_2_RankDiagnosisWomenREV, na.rm = TRUE)
+Q4_2_RankDiagnosisWomenSUM
+```
+
+
+```{r}
+WANDA$Q4_3_RankDiagnosisPartnersREV <- recode(WANDA$Q4_3_RankDiagnosisPartners,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_3_RankDiagnosisPartnersSUM <- sum(WANDA$Q4_3_RankDiagnosisPartnersREV, na.rm = TRUE)
+Q4_3_RankDiagnosisPartnersSUM
+```
+
+```{r}
+WANDA$Q4_4_RankBiologicalRiskREV <- recode(WANDA$Q4_4_RankBiologicalRisk,
+                                           `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_4_RankBiologicalRiskSUM <- sum(WANDA$Q4_4_RankBiologicalRiskREV, na.rm = TRUE)
+Q4_4_RankBiologicalRiskSUM
+```
+
+```{r}
+WANDA$Q4_5_RankEnvironmentalRiskREV <- recode(WANDA$Q4_5_RankEnvironmentalRisk,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_5_RankEnvironmentalRiskSUM <- sum(WANDA$Q4_5_RankEnvironmentalRiskREV, na.rm = TRUE)
+Q4_5_RankEnvironmentalRiskSUM
+```
+
+```{r}
+WANDA$Q4_6_RankPreviousPregnanciesREV <- recode(WANDA$Q4_6_RankPreviousPregnancies,
+                                                `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_6_RankPreviousPregnanciesSUM <- sum(WANDA$Q4_6_RankPreviousPregnanciesREV, na.rm = TRUE)
+Q4_6_RankPreviousPregnanciesSUM
+```
+
+```{r}
+WANDA$Q4_7_RankProtectiveFactorsREV <- recode(WANDA$Q4_7_RankProtectiveFactors,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_7_RankProtectiveFactorsSUM <- sum(WANDA$Q4_7_RankProtectiveFactorsREV, na.rm = TRUE)
+Q4_7_RankProtectiveFactorsSUM
+```
+
+```{r}
+WANDA$Q4_8_RankInterventionsWomenREV <- recode(WANDA$Q4_8_RankInterventionsWomen,
+                                               `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_8_RankInterventionsWomenSUM <- sum(WANDA$Q4_8_RankInterventionsWomenREV, na.rm = TRUE)
+Q4_8_RankInterventionsWomenSUM
+```
+
+```{r}
+WANDA$Q4_9_RankInterventionsPartnersREV <- recode(WANDA$Q4_9_RankInterventionsPartners,
+                                                  `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_9_RankInterventionsPartnersSUM <- sum(WANDA$Q4_9_RankInterventionsPartnersREV, na.rm = TRUE)
+Q4_9_RankInterventionsPartnersSUM
+```
+
+```{r}
+WANDA$Q4_10_RankHealthOutcomesWomenREV <- recode(WANDA$Q4_10_RankHealthOutcomesWomen,
+                                                 `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_10_RankHealthOutcomesWomenSUM <- sum(WANDA$Q4_10_RankHealthOutcomesWomenREV, na.rm = TRUE)
+Q4_10_RankHealthOutcomesWomenSUM
+```
+
+```{r}
+WANDA$Q4_11_RankHealthOutcomesPartnersREV <- recode(WANDA$Q4_11_RankHealthOutcomesPartners,
+                                                    `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_11_RankHealthOutcomesPartnersSUM <- sum(WANDA$Q4_11_RankHealthOutcomesPartnersREV, na.rm = TRUE)
+Q4_11_RankHealthOutcomesPartnersSUM
+```
+
+```{r}
+WANDA$Q4_12_RankHealthOutcomesBabyREV <- recode(WANDA$Q4_12_RankHealthOutcomesBaby,
+                                                `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_12_RankHealthOutcomesBabySUM <- sum(WANDA$Q4_12_RankHealthOutcomesBabyREV, na.rm = TRUE)
+Q4_12_RankHealthOutcomesBabySUM
+```
+
+```{r}
+WANDA$Q4_13_RankSocialEconomicREV <- recode(WANDA$Q4_13_RankSocialEconomic,
+                                            `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_13_RankSocialEconomicSUM <- sum(WANDA$Q4_13_RankSocialEconomicREV, na.rm = TRUE)
+Q4_13_RankSocialEconomicSUM
+```
+
+```{r}
+WANDA$Q4_14_RankParentInfantRelREV <- recode(WANDA$Q4_14_RankParentInfantRel,
+                                             `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_14_RankParentInfantRelSUM <- sum(WANDA$Q4_14_RankParentInfantRelREV, na.rm = TRUE)
+Q4_14_RankParentInfantRelSUM
+```
+
+```{r}
+WANDA$Q4_15_RankParentParentRelREV <- recode(WANDA$Q4_15_RankParentParentRel,
+                                             `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_15_RankParentParentRelSUM <- sum(WANDA$Q4_15_RankParentParentRelREV, na.rm = TRUE)
+Q4_15_RankParentParentRelSUM
+```
+
+
+Now same for the NDC subsample
+
+```{r}
+WANDA_NDC$Q4_1_RankPrevalenceREV <- recode(WANDA_NDC$Q4_1_RankPrevalence,
+                                       `1` = 5,
+                                       `2` = 4,
+                                       `3` = 3,
+                                       `4` = 2,
+                                       `5` = 1)
+Q4_1_RankPrevalenceSUMNDC <- sum(WANDA_NDC$Q4_1_RankPrevalenceREV, na.rm = TRUE)
+Q4_1_RankPrevalenceSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_2_RankDiagnosisWomenREV <- recode(WANDA_NDC$Q4_2_RankDiagnosisWomen,
+                                           `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_2_RankDiagnosisWomenSUMNDC <- sum(WANDA_NDC$Q4_2_RankDiagnosisWomenREV, na.rm = TRUE)
+Q4_2_RankDiagnosisWomenSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_3_RankDiagnosisPartnersREV <- recode(WANDA_NDC$Q4_3_RankDiagnosisPartners,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_3_RankDiagnosisPartnersSUMNDC <- sum(WANDA_NDC$Q4_3_RankDiagnosisPartnersREV, na.rm = TRUE)
+Q4_3_RankDiagnosisPartnersSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_4_RankBiologicalRiskREV <- recode(WANDA_NDC$Q4_4_RankBiologicalRisk,
+                                           `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_4_RankBiologicalRiskSUMNDC <- sum(WANDA_NDC$Q4_4_RankBiologicalRiskREV, na.rm = TRUE)
+Q4_4_RankBiologicalRiskSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_5_RankEnvironmentalRiskREV <- recode(WANDA_NDC$Q4_5_RankEnvironmentalRisk,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_5_RankEnvironmentalRiskSUMNDC <- sum(WANDA_NDC$Q4_5_RankEnvironmentalRiskREV, na.rm = TRUE)
+Q4_5_RankEnvironmentalRiskSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_6_RankPreviousPregnanciesREV <- recode(WANDA_NDC$Q4_6_RankPreviousPregnancies,
+                                                `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_6_RankPreviousPregnanciesSUMNDC <- sum(WANDA_NDC$Q4_6_RankPreviousPregnanciesREV, na.rm = TRUE)
+Q4_6_RankPreviousPregnanciesSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_7_RankProtectiveFactorsREV <- recode(WANDA_NDC$Q4_7_RankProtectiveFactors,
+                                              `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_7_RankProtectiveFactorsSUMNDC <- sum(WANDA_NDC$Q4_7_RankProtectiveFactorsREV, na.rm = TRUE)
+Q4_7_RankProtectiveFactorsSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_8_RankInterventionsWomenREV <- recode(WANDA_NDC$Q4_8_RankInterventionsWomen,
+                                               `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_8_RankInterventionsWomenSUMNDC <- sum(WANDA_NDC$Q4_8_RankInterventionsWomenREV, na.rm = TRUE)
+Q4_8_RankInterventionsWomenSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_9_RankInterventionsPartnersREV <- recode(WANDA_NDC$Q4_9_RankInterventionsPartners,
+                                                  `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_9_RankInterventionsPartnersSUMNDC <- sum(WANDA_NDC$Q4_9_RankInterventionsPartnersREV, na.rm = TRUE)
+Q4_9_RankInterventionsPartnersSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_10_RankHealthOutcomesWomenREV <- recode(WANDA_NDC$Q4_10_RankHealthOutcomesWomen,
+                                                 `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_10_RankHealthOutcomesWomenSUMNDC <- sum(WANDA_NDC$Q4_10_RankHealthOutcomesWomenREV, na.rm = TRUE)
+Q4_10_RankHealthOutcomesWomenSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_11_RankHealthOutcomesPartnersREV <- recode(WANDA_NDC$Q4_11_RankHealthOutcomesPartners,
+                                                    `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_11_RankHealthOutcomesPartnersSUMNDC <- sum(WANDA_NDC$Q4_11_RankHealthOutcomesPartnersREV, na.rm = TRUE)
+Q4_11_RankHealthOutcomesPartnersSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_12_RankHealthOutcomesBabyREV <- recode(WANDA_NDC$Q4_12_RankHealthOutcomesBaby,
+                                                `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_12_RankHealthOutcomesBabySUMNDC <- sum(WANDA_NDC$Q4_12_RankHealthOutcomesBabyREV, na.rm = TRUE)
+Q4_12_RankHealthOutcomesBabySUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_13_RankSocialEconomicREV <- recode(WANDA_NDC$Q4_13_RankSocialEconomic,
+                                            `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_13_RankSocialEconomicSUMNDC <- sum(WANDA_NDC$Q4_13_RankSocialEconomicREV, na.rm = TRUE)
+Q4_13_RankSocialEconomicSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_14_RankParentInfantRelREV <- recode(WANDA_NDC$Q4_14_RankParentInfantRel,
+                                             `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_14_RankParentInfantRelSUMNDC <- sum(WANDA_NDC$Q4_14_RankParentInfantRelREV, na.rm = TRUE)
+Q4_14_RankParentInfantRelSUMNDC
+```
+
+```{r}
+WANDA_NDC$Q4_15_RankParentParentRelREV <- recode(WANDA_NDC$Q4_15_RankParentParentRel,
+                                             `1` = 5, `2` = 4, `3` = 3, `4` = 2, `5` = 1)
+Q4_15_RankParentParentRelSUMNDC <- sum(WANDA_NDC$Q4_15_RankParentParentRelREV, na.rm = TRUE)
+Q4_15_RankParentParentRelSUMNDC
+```
+
+
+Putting them all into one dataframe
+
+```{r}
+summary_df <- data.frame(
+  variable = c(
+    # WANDA
+    "WANDA_Q4_1_RankPrevalenceSUM",
+    "WANDA_Q4_2_RankDiagnosisWomenSUM",
+    "WANDA_Q4_3_RankDiagnosisPartnersSUM",
+    "WANDA_Q4_4_RankBiologicalRiskSUM",
+    "WANDA_Q4_5_RankEnvironmentalRiskSUM",
+    "WANDA_Q4_6_RankPreviousPregnanciesSUM",
+    "WANDA_Q4_7_RankProtectiveFactorsSUM",
+    "WANDA_Q4_8_RankInterventionsWomenSUM",
+    "WANDA_Q4_9_RankInterventionsPartnersSUM",
+    "WANDA_Q4_10_RankHealthOutcomesWomenSUM",
+    "WANDA_Q4_11_RankHealthOutcomesPartnersSUM",
+    "WANDA_Q4_12_RankHealthOutcomesBabySUM",
+    "WANDA_Q4_13_RankSocialEconomicSUM",
+    "WANDA_Q4_14_RankParentInfantRelSUM",
+    "WANDA_Q4_15_RankParentParentRelSUM",
+
+    # WANDA_NDC
+    "WANDA_NDC_Q4_1_RankPrevalenceSUM",
+    "WANDA_NDC_Q4_2_RankDiagnosisWomenSUM",
+    "WANDA_NDC_Q4_3_RankDiagnosisPartnersSUM",
+    "WANDA_NDC_Q4_4_RankBiologicalRiskSUM",
+    "WANDA_NDC_Q4_5_RankEnvironmentalRiskSUM",
+    "WANDA_NDC_Q4_6_RankPreviousPregnanciesSUM",
+    "WANDA_NDC_Q4_7_RankProtectiveFactorsSUM",
+    "WANDA_NDC_Q4_8_RankInterventionsWomenSUM",
+    "WANDA_NDC_Q4_9_RankInterventionsPartnersSUM",
+    "WANDA_NDC_Q4_10_RankHealthOutcomesWomenSUM",
+    "WANDA_NDC_Q4_11_RankHealthOutcomesPartnersSUM",
+    "WANDA_NDC_Q4_12_RankHealthOutcomesBabySUM",
+    "WANDA_NDC_Q4_13_RankSocialEconomicSUM",
+    "WANDA_NDC_Q4_14_RankParentInfantRelSUM",
+    "WANDA_NDC_Q4_15_RankParentParentRelSUM"
+  ),
+  value = c(
+    # WANDA
+    Q4_1_RankPrevalenceSUM,
+    Q4_2_RankDiagnosisWomenSUM,
+    Q4_3_RankDiagnosisPartnersSUM,
+    Q4_4_RankBiologicalRiskSUM,
+    Q4_5_RankEnvironmentalRiskSUM,
+    Q4_6_RankPreviousPregnanciesSUM,
+    Q4_7_RankProtectiveFactorsSUM,
+    Q4_8_RankInterventionsWomenSUM,
+    Q4_9_RankInterventionsPartnersSUM,
+    Q4_10_RankHealthOutcomesWomenSUM,
+    Q4_11_RankHealthOutcomesPartnersSUM,
+    Q4_12_RankHealthOutcomesBabySUM,
+    Q4_13_RankSocialEconomicSUM,
+    Q4_14_RankParentInfantRelSUM,
+    Q4_15_RankParentParentRelSUM,
+
+    # WANDA_NDC
+    Q4_1_RankPrevalenceSUMNDC,
+    Q4_2_RankDiagnosisWomenSUMNDC,
+    Q4_3_RankDiagnosisPartnersSUMNDC,
+    Q4_4_RankBiologicalRiskSUMNDC,
+    Q4_5_RankEnvironmentalRiskSUMNDC,
+    Q4_6_RankPreviousPregnanciesSUMNDC,
+    Q4_7_RankProtectiveFactorsSUMNDC,
+    Q4_8_RankInterventionsWomenSUMNDC,
+    Q4_9_RankInterventionsPartnersSUMNDC,
+    Q4_10_RankHealthOutcomesWomenSUMNDC,
+    Q4_11_RankHealthOutcomesPartnersSUMNDC,
+    Q4_12_RankHealthOutcomesBabySUMNDC,
+    Q4_13_RankSocialEconomicSUMNDC,
+    Q4_14_RankParentInfantRelSUMNDC,
+    Q4_15_RankParentParentRelSUMNDC
+  )
+)
+
+print(summary_df)
+```
+
+```{r}
+summary_df$variable
+```
+```{r}
+summary_df %>% filter(variable == "WANDA_NDC_Q4_1_RankPrevalenceSUM")
+```
+
+1) INITIAL BAR CHAR
+Making bar chart to see distribution of ranks 
+
+Creating variables for column names and score 
+```{r}
+VAR_COL   <- "variable" 
+SCORE_COL <- "value"
+```
+
+Loading packages
+```{r}
+library(ggplot2)
+library(dplyr)
+library(stringr)
+```
+
+Naming the topics
+```{r}
+topic_labels <- c(
+  WANDA_Q4_1_RankPrevalenceSUM                  = "Prevalence",
+  WANDA_Q4_2_RankDiagnosisWomenSUM              = "Diagnosis (for women/birthing people)",
+  WANDA_Q4_3_RankDiagnosisPartnersSUM           = "Diagnosis (for partners)",
+  WANDA_Q4_4_RankBiologicalRiskSUM              = "Biological risk",
+  WANDA_Q4_5_RankEnvironmentalRiskSUM           = "Environmental risk",
+  WANDA_Q4_6_RankPreviousPregnanciesSUM         = "Previous pregnancies",
+  WANDA_Q4_7_RankProtectiveFactorsSUM           = "Protective factors",
+  WANDA_Q4_8_RankInterventionsWomenSUM          = "Interventions (for women/birthing people)",
+  WANDA_Q4_9_RankInterventionsPartnersSUM       = "Interventions (for partners)",
+  WANDA_Q4_10_RankHealthOutcomesWomenSUM        = "Health outcomes (women/birthing people)",
+  WANDA_Q4_11_RankHealthOutcomesPartnersSUM     = "Health outcomes (for partners)",
+  WANDA_Q4_12_RankHealthOutcomesBabySUM         = "Health outcomes (baby)",
+  WANDA_Q4_13_RankSocialEconomicSUM             = "Social and economic outcomes",
+  WANDA_Q4_14_RankParentInfantRelSUM            = "Parent-infant relationship",
+  WANDA_Q4_15_RankParentParentRelSUM            = "Parent-parent relationship",
+  WANDA_NDC_Q4_1_RankPrevalenceSUM              = "Prevalence",
+  WANDA_NDC_Q4_2_RankDiagnosisWomenSUM          = "Diagnosis (for women/birthing people)",
+  WANDA_NDC_Q4_3_RankDiagnosisPartnersSUM       = "Diagnosis (for partners)",
+  WANDA_NDC_Q4_4_RankBiologicalRiskSUM          = "Biological risk",
+  WANDA_NDC_Q4_5_RankEnvironmentalRiskSUM       = "Environmental risk",
+  WANDA_NDC_Q4_6_RankPreviousPregnanciesSUM     = "Previous pregnancies",
+  WANDA_NDC_Q4_7_RankProtectiveFactorsSUM       = "Protective factors",
+  WANDA_NDC_Q4_8_RankInterventionsWomenSUM      = "Interventions (for women/birthing people)",
+  WANDA_NDC_Q4_9_RankInterventionsPartnersSUM   = "Interventions (for partners)",
+  WANDA_NDC_Q4_10_RankHealthOutcomesWomenSUM    = "Health outcomes (women/birthing people)",
+  WANDA_NDC_Q4_11_RankHealthOutcomesPartnersSUM = "Health outcomes (for partners)",
+  WANDA_NDC_Q4_12_RankHealthOutcomesBabySUM     = "Health outcomes (baby)",
+  WANDA_NDC_Q4_13_RankSocialEconomicSUM         = "Social and economic outcomes",
+  WANDA_NDC_Q4_14_RankParentInfantRelSUM        = "Parent-infant relationship",
+  WANDA_NDC_Q4_15_RankParentParentRelSUM        = "Parent-parent relationship"
+)
+```
+
+Wrangling data for plot
+```{r}
+df <- summary_df %>%
+  dplyr::rename(variable = all_of(VAR_COL), score = all_of(SCORE_COL)) %>%
+  dplyr::mutate(
+    group = if_else(str_detect(variable, "_NDC_"), "NDC subsample (n=212)", "Whole sample (n=709)"),
+    topic = topic_labels[variable]
+  ) %>%
+  filter(!is.na(topic))
+```
+
+Order topics by whole-sample priority score (descending - note - ascending so highest ends up at top of flipped axis)
+```{r}
+topic_order <- df %>%
+  filter(group == "Whole sample (n=709)") %>%
+  arrange(score) %>%   
+  pull(topic)
+
+df <- df %>%
+  mutate(topic = factor(topic, levels = topic_order))
+```
+
+Annotating the tiers (based on whole-sample rank from table )
+```{r}
+top_topics <- c(
+  "Interventions (for women/birthing people)",
+  "Diagnosis (for women/birthing people)",
+  "Parent-infant relationship"
+)
+bottom_topics <- c(
+  "Social and economic outcomes",
+  "Health outcomes (for partners)"
+)
+df <- df %>%
+  mutate(tier = case_when(
+    topic %in% top_topics    ~ ">50%\ntop 5",
+    topic %in% bottom_topics ~ "<20%\ntop 5",
+    TRUE                     ~ "20–49%\ntop 5"
+  ))
+```
+
+Setting up the colours
+```{r}
+group_colours <- c(
+  "Whole sample (n=709)"     = "deepskyblue4",
+  "NDC subsample (n=212)"    = "indianred4"
+)
+```
+
+Plot incorporating all the above
+```{r}
+p <- ggplot(df, aes(x = score, y = topic, fill = group)) +
+  geom_col(
+    position = position_dodge(width = 0.7),
+    width = 0.65,
+    alpha = 0.85
+  ) +
+  scale_fill_manual(values = group_colours, name = NULL) +
+  scale_x_continuous(
+    name   = "Priority score",
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  labs(y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(colour = "grey90"),
+    axis.text.y        = element_text(size = 9, colour = "grey30"),
+    axis.text.x        = element_text(size = 9, colour = "grey50"),
+    axis.title.x       = element_text(size = 10, colour = "grey40", margin = margin(t = 6)),
+    legend.position    = "top",
+    legend.text        = element_text(size = 10),
+    legend.key.size    = unit(0.5, "cm"),
+    plot.background    = element_rect(fill = "white", colour = NA),
+    panel.background   = element_rect(fill = "white", colour = NA),
+    plot.margin        = margin(12, 20, 12, 12)
+  )
+
+print(p)
+```
+
+Info for the supplementary material 
+```{r}
+WANDA <- WANDA %>%
+  mutate(
+    # NO to all three
+    group_NoNDC = Q1_4_DiagnosisAutism == "NO. I have never been diagnosed with this" &
+                  Q1_3_DiagnosisADHD == "NO. I have never been diagnosed with this" &
+                  Q1_6_DiagnosisOtherNeurodev == "NO. I have never been diagnosed with this",
+
+    # Autism Yes
+    group_AutismYes = Q1_4_DiagnosisAutism %in% c(
+      "YES, I have been diagnosed with this",
+      "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+    ),
+
+    # Autism Maybe
+    group_AutismMaybe = Q1_4_DiagnosisAutism == "MAYBE. I think this may apply to me but I am not sure",
+
+    # ADHD Yes
+    group_ADHDYes = Q1_3_DiagnosisADHD %in% c(
+      "YES, I have been diagnosed with this",
+      "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+    ),
+
+    # ADHD Maybe
+    group_ADHDMaybe = Q1_3_DiagnosisADHD == "MAYBE. I think this may apply to me but I am not sure",
+
+    # Other Neurodev Yes
+    group_OtherNDCYes = Q1_6_DiagnosisOtherNeurodev %in% c(
+      "YES, I have been diagnosed with this",
+      "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"
+    ),
+
+    # Other Neurodev Maybe
+    group_OtherNDCMaybe = Q1_6_DiagnosisOtherNeurodev == "MAYBE. I think this may apply to me but I am not sure"
+  )
+```
+
+Summarising
+```{r}
+WANDA %>% dplyr::summarise(across(starts_with("group_"), ~ sum(., na.rm = TRUE)))
+```
+Now the same but for the actual subgroups in the paper
+
+What unique values 
+```{r}
+WANDA$Q1_4_DiagnosisAutism <- as.factor(WANDA$Q1_4_DiagnosisAutism)
+unique(WANDA$Q1_4_DiagnosisAutism)
+```
+```{r}
+WANDA$Q1_3_DiagnosisADHD <- as.factor(WANDA$Q1_3_DiagnosisADHD)
+unique(WANDA$Q1_3_DiagnosisADHD)
+```
+
+```{r}
+WANDA$Q1_6_DiagnosisOtherNeurodev <- as.factor(WANDA$Q1_6_DiagnosisOtherNeurodev)
+unique(WANDA$Q1_6_DiagnosisOtherNeurodev)
+```
+
+Creating the groups 
+```{r}
+WANDA_grouped <- WANDA %>%
+  filter(
+    Q1_4_DiagnosisAutism      != "Prefer not to answer",
+    Q1_3_DiagnosisADHD        != "Prefer not to answer",
+    Q1_6_DiagnosisOtherNeurodev != "Prefer not to answer"
+  ) %>%
+  mutate(
+    has_yes = Q1_4_DiagnosisAutism %in% c("YES, I have been diagnosed with this", "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this") |
+              Q1_3_DiagnosisADHD %in% c("YES, I have been diagnosed with this", "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this") |
+              Q1_6_DiagnosisOtherNeurodev %in% c("YES, I have been diagnosed with this", "YES/LIKELY YES. I have never received a diagnosis but this applies to me / I self-identity with this"),
+
+    has_maybe = Q1_4_DiagnosisAutism == "MAYBE. I think this may apply to me but I am not sure" |
+                Q1_3_DiagnosisADHD == "MAYBE. I think this may apply to me but I am not sure" |
+                Q1_6_DiagnosisOtherNeurodev == "MAYBE. I think this may apply to me but I am not sure",
+
+    has_no_all = Q1_4_DiagnosisAutism == "NO. I have never been diagnosed with this" &
+                 Q1_3_DiagnosisADHD == "NO. I have never been diagnosed with this" &
+                 Q1_6_DiagnosisOtherNeurodev == "NO. I have never been diagnosed with this",
+
+    NDC_group = case_when(
+      has_yes              ~ "YesNDC",
+      has_maybe & !has_yes ~ "MaybeNDC",
+      has_no_all           ~ "NoNDC",
+      TRUE                 ~ NA_character_  # catches any remaining edge cases
+    )
+  ) %>%
+  filter(!is.na(NDC_group))
+```
+
+Checking counts 
+```{r}
+table(WANDA_grouped$NDC_group)
+```
+
+
+BARCHAT FOR PAPER
+(Note - I tried a lot of iterations to see what looks best, but have only kept the code for the version that is in the paper)
+```{r}
+# ============================================================
+# Perinatal Mental Health Research Priorities - Chart v7 updated
+# ============================================================
+
+VAR_COL    <- "variable"
+SCORE_COL  <- "value"
+
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(forcats)
+
+# ---- 1. Labels ----
+short_labels <- c(
+  WANDA_Q4_1_RankPrevalenceSUM                  = "PREVALENCE\n How common are PMHD?",
+  WANDA_Q4_2_RankDiagnosisWomenSUM              = "DIAGNOSIS (WOMEN*)\n How can we improve diagnosis of PMHD..?",
+  WANDA_Q4_3_RankDiagnosisPartnersSUM           = "DIAGNOSIS (PARTNERS)\n How can we improve diagnosis of PMHD..?",
+  WANDA_Q4_4_RankBiologicalRiskSUM              = "BIOLOGICAL RISK\n What biological factors (e.g., genetics, hormones) may put people more at risk?",
+  WANDA_Q4_5_RankEnvironmentalRiskSUM           = "ENVIRONMENTAL RISK\n What environmental factors (e.g., poverty) may put people more at risk?",
+  WANDA_Q4_6_RankPreviousPregnanciesSUM         = "PREVIOUS PREGNANCIES\n How do previous pregnancies affect someone's perinatal mental health?",
+  WANDA_Q4_7_RankProtectiveFactorsSUM           = "PROTECTIVE FACTORS\n What factors may reduce someone's risk for developing PMHD?",
+  WANDA_Q4_8_RankInterventionsWomenSUM          = "INTERVENTIONS (WOMEN*)\n What interventions/treatment/support are most effective and appropriate..?",
+  WANDA_Q4_9_RankInterventionsPartnersSUM       = "INTERVENTIONS (PARTNERS)\n What interventions/treatment/support are most effective and appropriate..?",
+  WANDA_Q4_10_RankHealthOutcomesWomenSUM        = "HEALTH OUTCOMES (WOMEN*)\n What are the long-term physical and mental health outcomes..?",
+  WANDA_Q4_11_RankHealthOutcomesPartnersSUM     = "HEALTH OUTCOMES (PARTNERS)\n What are the long-term physical and mental health outcomes..?",
+  WANDA_Q4_12_RankHealthOutcomesBabySUM         = "HEALTH OUTCOMES (BABY)\n What are the long-term physical and mental health outcomes of babies?",
+  WANDA_Q4_13_RankSocialEconomicSUM             = "SOCIAL AND ECONOMIC OUTCOMES\n What are the long-term social and economic outcomes (e.g., employment, housing)?",
+  WANDA_Q4_14_RankParentInfantRelSUM            = "PARENT-INFANT RELATIONSHIP\n Do PMHD affect the relationship between parent and infant?",
+  WANDA_Q4_15_RankParentParentRelSUM            = "PARENT-PARENT RELATIONSHIP\n Do PMHD affect the relationship between parents?",
+  WANDA_NDC_Q4_1_RankPrevalenceSUM              = "PREVALENCE\n How common are PMHD?",
+  WANDA_NDC_Q4_2_RankDiagnosisWomenSUM          = "DIAGNOSIS (WOMEN*)\n How can we improve diagnosis of PMHD..?",
+  WANDA_NDC_Q4_3_RankDiagnosisPartnersSUM       = "DIAGNOSIS (PARTNERS)\n How can we improve diagnosis of PMHD..?",
+  WANDA_NDC_Q4_4_RankBiologicalRiskSUM          = "BIOLOGICAL RISK\n What biological factors (e.g., genetics, hormones) may put people more at risk?",
+  WANDA_NDC_Q4_5_RankEnvironmentalRiskSUM       = "ENVIRONMENTAL RISK\n What environmental factors (e.g., poverty) may put people more at risk?",
+  WANDA_NDC_Q4_6_RankPreviousPregnanciesSUM     = "PREVIOUS PREGNANCIES\n How do previous pregnancies affect someone's perinatal mental health?",
+  WANDA_NDC_Q4_7_RankProtectiveFactorsSUM       = "PROTECTIVE FACTORS\n What factors may reduce someone's risk for developing PMHD?",
+  WANDA_NDC_Q4_8_RankInterventionsWomenSUM      = "INTERVENTIONS (WOMEN*)\n What interventions/treatment/support are most effective and appropriate..?",
+  WANDA_NDC_Q4_9_RankInterventionsPartnersSUM   = "INTERVENTIONS (PARTNERS)\n What interventions/treatment/support are most effective and appropriate..?",
+  WANDA_NDC_Q4_10_RankHealthOutcomesWomenSUM    = "HEALTH OUTCOMES (WOMEN*)\n What are the long-term physical and mental health outcomes..?",
+  WANDA_NDC_Q4_11_RankHealthOutcomesPartnersSUM = "HEALTH OUTCOMES (PARTNERS)\n What are the long-term physical and mental health outcomes..?",
+  WANDA_NDC_Q4_12_RankHealthOutcomesBabySUM     = "HEALTH OUTCOMES (BABY)\n What are the long-term physical and mental health outcomes of babies?",
+  WANDA_NDC_Q4_13_RankSocialEconomicSUM         = "SOCIAL AND ECONOMIC OUTCOMES\n What are the long-term social and economic outcomes (e.g., employment, housing)?",
+  WANDA_NDC_Q4_14_RankParentInfantRelSUM        = "PARENT-INFANT RELATIONSHIP\n Do PMHD affect the relationship between parent and infant?",
+  WANDA_NDC_Q4_15_RankParentParentRelSUM        = "PARENT-PARENT RELATIONSHIP\n Do PMHD affect the relationship between parents?"
+)
+
+# ---- 2. Mean rank (SD) — labels must match short_labels exactly ----
+mean_sd_labels <- tribble(
+  ~short_label,                                                                                      
+  ~group,                   
+  ~mean_sd,
+  "PREVALENCE\n How common are PMHD?",                  
+  "Whole sample (n=709)",     "3.14 (1.56)",
+  "DIAGNOSIS (WOMEN*)\n How can we improve diagnosis of PMHD..?",              
+  "Whole sample (n=709)",     "2.26 (1.26)",
+  "DIAGNOSIS (PARTNERS)\n How can we improve diagnosis of PMHD..?",          
+  "Whole sample (n=709)",     "3.45 (1.26)",
+  "BIOLOGICAL RISK\n What biological factors (e.g., genetics, hormones) may put people more at risk?",
+  "Whole sample (n=709)",     "3.09 (1.39)",
+  "ENVIRONMENTAL RISK\n What environmental factors (e.g., poverty) may put people more at risk?",   
+  "Whole sample (n=709)",     "3.48 (1.41)",
+  "PREVIOUS PREGNANCIES\n How do previous pregnancies affect someone's perinatal mental health?",   
+  "Whole sample (n=709)",     "2.82 (1.40)",
+  "PROTECTIVE FACTORS\n What factors may reduce someone's risk for developing PMHD?",         
+  "Whole sample (n=709)",     "2.98 (1.44)",
+  "INTERVENTIONS (WOMEN*)\n What interventions/treatment/support are most effective and appropriate..?",
+  "Whole sample (n=709)",     "2.38 (1.26)",
+  "INTERVENTIONS (PARTNERS)\n What interventions/treatment/support are most effective and appropriate..?",
+  "Whole sample (n=709)",   "3.59 (1.19)",
+  "HEALTH OUTCOMES (WOMEN*)\n What are the long-term physical and mental health outcomes..?",               
+  "Whole sample (n=709)",     "3.02 (1.23)",
+  "HEALTH OUTCOMES (PARTNERS)\n What are the long-term physical and mental health outcomes..?",           
+  "Whole sample (n=709)",     "4.12 (1.10)",
+  "HEALTH OUTCOMES (BABY)\n What are the long-term physical and mental health outcomes of babies?",       
+  "Whole sample (n=709)",     "2.95 (1.34)",
+  "SOCIAL AND ECONOMIC OUTCOMES\n What are the long-term social and economic outcomes (e.g., employment, housing)?",
+  "Whole sample (n=709)", "4.05 (1.16)",
+  "PARENT-INFANT RELATIONSHIP\n Do PMHD affect the relationship between parent and infant?",          
+  "Whole sample (n=709)",     "3.08 (1.34)",
+  "PARENT-PARENT RELATIONSHIP\n Do PMHD affect the relationship between parents?",                   
+  "Whole sample (n=709)",     "4.06 (1.20)",
+  "PREVALENCE\n How common are PMHD?",                                                               
+  "NDC subsample (n=212)",    "3.00 (1.57)",
+  "DIAGNOSIS (WOMEN*)\n How can we improve diagnosis of PMHD..?",                                     
+  "NDC subsample (n=212)",    "2.24 (1.31)",
+  "DIAGNOSIS (PARTNERS)\n How can we improve diagnosis of PMHD..?",                           
+  "NDC subsample (n=212)",    "3.29 (1.32)",
+  "BIOLOGICAL RISK\n What biological factors (e.g., genetics, hormones) may put people more at risk?",  
+  "NDC subsample (n=212)",    "2.98 (1.42)",
+  "ENVIRONMENTAL RISK\n What environmental factors (e.g., poverty) may put people more at risk?",   
+  "NDC subsample (n=212)",    "3.57 (1.38)",
+  "PREVIOUS PREGNANCIES\n How do previous pregnancies affect someone's perinatal mental health?",         
+  "NDC subsample (n=212)",    "2.62 (1.35)",
+  "PROTECTIVE FACTORS\n What factors may reduce someone's risk for developing PMHD?",               
+  "NDC subsample (n=212)",    "3.06 (1.36)",
+  "INTERVENTIONS (WOMEN*)\n What interventions/treatment/support are most effective and appropriate..?",
+  "NDC subsample (n=212)",    "2.44 (1.30)",
+  "INTERVENTIONS (PARTNERS)\n What interventions/treatment/support are most effective and appropriate..?",
+  "NDC subsample (n=212)",  "3.33 (1.21)",
+  "HEALTH OUTCOMES (WOMEN*)\n What are the long-term physical and mental health outcomes..?",                 
+  "NDC subsample (n=212)",    "3.15 (1.33)",
+  "HEALTH OUTCOMES (PARTNERS)\n What are the long-term physical and mental health outcomes..?",               
+  "NDC subsample (n=212)",    "3.78 (1.09)",
+  "HEALTH OUTCOMES (BABY)\n What are the long-term physical and mental health outcomes of babies?",          
+  "NDC subsample (n=212)",    "3.27 (1.35)",
+  "SOCIAL AND ECONOMIC OUTCOMES\n What are the long-term social and economic outcomes (e.g., employment, housing)?", 
+  "NDC subsample (n=212)", "4.00 (1.20)",
+  "PARENT-INFANT RELATIONSHIP\n Do PMHD affect the relationship between parent and infant?",          
+  "NDC subsample (n=212)",    "3.14 (1.35)",
+  "PARENT-PARENT RELATIONSHIP\n Do PMHD affect the relationship between parents?",                
+  "NDC subsample (n=212)",    "3.85 (1.25)"
+)
+
+# ---- 3. Tier membership ----
+top_keys <- c(
+  "WANDA_Q4_8_RankInterventionsWomenSUM",
+  "WANDA_Q4_2_RankDiagnosisWomenSUM",
+  "WANDA_Q4_14_RankParentInfantRelSUM"
+)
+bottom_keys <- c(
+  "WANDA_Q4_13_RankSocialEconomicSUM",
+  "WANDA_Q4_11_RankHealthOutcomesPartnersSUM"
+)
+
+# ---- 4. Wrangle ----
+df <- summary_df %>%
+  dplyr::rename(variable = all_of(VAR_COL), score = all_of(SCORE_COL)) %>%
+  mutate(
+    group       = if_else(str_detect(variable, "_NDC_"), "NDC subsample (n=212)", "Whole sample (n=709)"),
+    short_label = short_labels[variable],
+    tier = case_when(
+      variable %in% top_keys | str_replace(variable, "WANDA_NDC_Q4_", "WANDA_Q4_") %in% top_keys       ~ ">50% ranked in top 5",
+      variable %in% bottom_keys | str_replace(variable, "WANDA_NDC_Q4_", "WANDA_Q4_") %in% bottom_keys ~ "<20% ranked in top 5",
+      TRUE ~ "20-49% ranked in top 5"
+    ),
+    tier = factor(tier, levels = c(
+      ">50% ranked in top 5",
+      "20-49% ranked in top 5",
+      "<20% ranked in top 5"
+    ))
+  ) %>%
+  filter(!is.na(short_label)) %>%
+  left_join(mean_sd_labels, by = c("short_label", "group"))
+
+# ---- 5. Topic order — must match short_labels exactly ----
+topic_order <- c(
+  "INTERVENTIONS (WOMEN*)\n What interventions/treatment/support are most effective and appropriate..?",
+  "DIAGNOSIS (WOMEN*)\n How can we improve diagnosis of PMHD..?",
+  "PARENT-INFANT RELATIONSHIP\n Do PMHD affect the relationship between parent and infant?",
+  "HEALTH OUTCOMES (WOMEN*)\n What are the long-term physical and mental health outcomes..?",
+  "HEALTH OUTCOMES (BABY)\n What are the long-term physical and mental health outcomes of babies?",
+  "PROTECTIVE FACTORS\n What factors may reduce someone's risk for developing PMHD?",
+  "PREVIOUS PREGNANCIES\n How do previous pregnancies affect someone's perinatal mental health?",
+  "PREVALENCE\n How common are PMHD?",
+  "ENVIRONMENTAL RISK\n What environmental factors (e.g., poverty) may put people more at risk?",
+  "BIOLOGICAL RISK\n What biological factors (e.g., genetics, hormones) may put people more at risk?",
+  "DIAGNOSIS (PARTNERS)\n How can we improve diagnosis of PMHD..?",
+  "PARENT-PARENT RELATIONSHIP\n Do PMHD affect the relationship between parents?",
+  "INTERVENTIONS (PARTNERS)\n What interventions/treatment/support are most effective and appropriate..?",
+  "SOCIAL AND ECONOMIC OUTCOMES\n What are the long-term social and economic outcomes (e.g., employment, housing)?",
+  "HEALTH OUTCOMES (PARTNERS)\n What are the long-term physical and mental health outcomes..?"
+)
+
+df <- df %>%
+  mutate(
+    short_label = factor(short_label, levels = rev(topic_order)),
+    tier = fct_relevel(tier, ">50% ranked in top 5", "20-49% ranked in top 5", "<20% ranked in top 5")
+  )
+
+# ---- 6. Colours ----
+group_colours <- c(
+  "Whole sample (n=709)"  = "#5340B7",
+  "NDC subsample (n=212)" = "#1D9E75"
+)
+
+# ---- 7. Plot ----
+p_barchart7 <- ggplot(df, aes(x = score, y = short_label, fill = group)) +
+  geom_col(
+    position = position_dodge(width = 0.85),
+    width    = 0.82,
+    alpha    = 0.85
+  ) +
+  geom_text(
+    aes(label = mean_sd, group = group),
+    position = position_dodge(width = 0.85),
+    hjust    = -0.1,
+    size     = 7,
+    colour   = "black"
+  ) +
+  facet_grid(
+    tier ~ .,
+    scales   = "free_y",
+    space    = "free_y",
+    labeller = label_wrap_gen(width = 10)
+  ) +
+  scale_fill_manual(values = group_colours, name = NULL) +
+  scale_x_continuous(
+    name   = "Priority score",
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.18))
+  ) +
+  coord_cartesian(clip = "off") + 
+  labs(y = NULL) +
+  theme_minimal(base_size = 22) +
+  theme(
+    panel.grid.major.y  = element_blank(),
+    panel.grid.minor    = element_blank(),
+    panel.grid.major.x  = element_line(colour = "white"),
+    axis.text.y         = element_text(size = 19, colour = "black",
+                                       lineheight = 1.1),
+    axis.text.x         = element_text(size =20, colour = "black"),
+    axis.title.x        = element_text(size = 20, colour = "black", margin = margin(t = 6)),
+    legend.position     = "bottom",
+    legend.text         = element_text(size = 21),
+    legend.key.size     = unit(0.55, "cm"),
+    strip.background  = element_rect(fill = NA, colour = NA),
+    strip.text.y      = element_text(size = 20, face = "bold", colour = "black",
+                                 angle = 0, hjust = 0),
+    panel.border      = element_rect(fill = NA, colour = "grey80", linewidth = 0.4),
+    panel.spacing       = unit(0.2, "lines"),
+    plot.background     = element_rect(fill = "white", colour = NA),
+    panel.background    = element_rect(fill = "grey95", colour = NA),
+    plot.margin         = margin(12, 20, 12, 12),
+    plot.caption = element_text(size = 15, colour = "black", margin = margin(t = 8, l = 100))
+  )
+
+print(p_barchart7)
+
+# ---- 8. Save ----
+ggsave(
+  "perinatal_priorities_chart_v7_updated.png",
+  plot   = p_barchart7,
+  width  = 20,
+  height = 22,
+  dpi    = 300,
+  bg     = "white"
+)
+
+message("Saved as perinatal_priorities_chart_v7_updated.png")
+```
+Similar for heatmap (only kept the code for the plot that ended up making into the publication)
+
+```{r}
+
+# ============================================================
+# Perinatal Mental Health Research Priorities - Heatmap
+# Rows = topics, Columns = neurotype groups
+# Fill = normalised priority score (per participant)
+# ============================================================
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# ---- 1. Data ----
+# Raw priority scores and group Ns
+n_per_group <- c(
+  "No NDC"          = 398,
+  "Autism Yes"      = 86,
+  "Autism Maybe"    = 77,
+  "ADHD Yes"        = 104,
+  "ADHD Maybe"      = 89,
+  "Other NDC Yes"   = 82,
+  "Other NDC Maybe" = 23
+)
+
+heatmap_df <- tribble(
+  ~topic,                                    ~`No NDC`, ~`Autism Yes`, ~`Autism Maybe`, ~`ADHD Yes`, ~`ADHD Maybe`, ~`Other NDC Yes`, ~`Other NDC Maybe`,
+  "Interventions (women*)",   1033,       255,           183,             242,         253,           219,              49,
+  "Diagnosis (women*)",        886,       191,           155,             241,         159,           167,              47,
+  "Parent-infant relationship",               648,       127,           102,             147,         138,           150,              26,
+  "Health outcomes (women*)",  514,        98,            95,             115,         111,            86,              42,
+  "Health outcomes (baby)",                   496,        94,            91,             106,          95,            83,              31,
+  "Protective factors",                       410,        71,           115,             114,         122,            91,              32,
+  "Previous pregnancies",                     436,        88,            73,             124,          84,            91,              32,
+  "Prevalence",                               263,        64,            63,             115,          62,            80,              24,
+  "Environmental risk",                       275,        48,            93,              77,          53,            45,               7,
+  "Biological risk",                          250,        57,            51,              72,          68,            40,               6,
+  "Diagnosis (partners)",                     198,        66,            46,              55,          54,            53,              25,
+  "Parent-parent relationship",               211,        41,            38,              56,          46,            59,               6,
+  "Interventions (partners)",                 210,        54,            23,              34,          46,            32,               9,
+  "Social & economic outcomes",               105,        20,            22,              52,          29,            27,               2,
+  "Health outcomes (partners)",                31,        16,             5,              10,          15,             7,               7
+)
+
+# ---- 2. Normalise scores per participant within each group ----
+# This makes groups comparable despite different sample sizes
+heatmap_long <- heatmap_df %>%
+  pivot_longer(-topic, names_to = "group", values_to = "priority_score") %>%
+  mutate(
+    n     = n_per_group[group],
+    score_per_person = priority_score / n,
+    # Order topics by No NDC priority score (descending) to match main figure
+    topic = factor(topic, levels = rev(c(
+      "Interventions (women*)",
+      "Diagnosis (women*)",
+      "Parent-infant relationship",
+      "Health outcomes (women*)",
+      "Health outcomes (baby)",
+      "Protective factors",
+      "Previous pregnancies",
+      "Prevalence",
+      "Environmental risk",
+      "Biological risk",
+      "Diagnosis (partners)",
+      "Parent-parent relationship",
+      "Interventions (partners)",
+      "Social & economic outcomes",
+      "Health outcomes (partners)"
+    ))),
+    # Order groups logically
+    group = factor(group, levels = c(
+      "No NDC",
+      "Autism Yes", "Autism Maybe",
+      "ADHD Yes",   "ADHD Maybe",
+      "Other NDC Yes", "Other NDC Maybe"
+    ))
+  )
+
+# ---- 3. Plot ----
+p_nolabels <- ggplot(heatmap_long, aes(x = group, y = topic, fill = score_per_person)) +
+  geom_tile(colour = "white", linewidth = 0.5) +
+  # show raw score in each cell
+  geom_text(aes(label = priority_score), size = 7, colour = "black") +
+    scale_fill_gradient(
+    low  = "#EEF4FB",
+    high = "orchid3",
+    name = "Priority score\n(per participant)",
+    guide = "none"
+  ) +
+  scale_x_discrete(position = "bottom") +
+  labs(x = NULL, y = NULL,
+       caption = "Bar chart: Priority scores - higher scores reflect a higher level of prioritisation. Ranking scores were reverse scored and then a sum was calculated across all participants for each individual priority. \nHeatmap: Cell values show raw priority scores. Colour intensity reflects score normalised by group size. WOMEN* = women and birthing people, PMHD = perinatal mental health difficulties, NDC = neurodevelopmental conditions. \nNDC subsample includes Yes or Likely Yes answers to any of the questions regarding a (self-)diagnosis of autism, ADHD, or other NDCs like dyslexia or dyspraxia; it does not include participants who answered Maybe.") +
+  theme_minimal(base_size = 19) +
+  theme(axis.text.x = element_text(
+  colour = c("black", "#1D9E75", "goldenrod3", 
+             "#1D9E75", "goldenrod3", "#1D9E75", "goldenrod3"), angle=-20, size=22, hjust=0),
+    axis.text.y       = element_blank(),
+    panel.grid        = element_blank(),
+    legend.position   = "right",
+    legend.title      = element_text(size = 19),
+    legend.text       = element_text(size = 19),
+    plot.caption      = element_text(size = 19, colour = "black", margin = margin(t = 8), hjust=0),
+    plot.background   = element_rect(fill = "white", colour = NA),
+    panel.background  = element_rect(fill = "white", colour = NA),
+    plot.margin       = margin(12, 12, 12, 12)
+  )
+
+print(p_nolabels)
+
+# ---- 4. Save ----
+ggsave(
+  "perinatal_priorities_heatmap.png",
+  plot   = p_nolabels,
+  width  = 11,
+  height = 8,
+  dpi    = 300,
+  bg     = "white"
+)
+
+message("Saved as perinatal_priorities_heatmap.png")
+```
+Checking class of figures
+```{r}
+class(p_nolabels)
+class(p_barchart7)
+```
+
+
+Combining both figures into one
+```{r}
+library(patchwork)
+combined <- p_nolabels + p_barchart7 +
+  plot_layout(widths = c(2, 1.5), guides = "collect") &
+  theme(legend.position = "bottom")
+
+ggsave("combined_figure.pdf", plot = combined, width = 28, height = 18, dpi = 300, bg = "white")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
